@@ -2,54 +2,76 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getSocket } from "@/lib/socket";
 
 export default function HomePage() {
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
+  const [createUsername, setCreateUsername] = useState("");
+  const [joinUsername, setJoinUsername] = useState("");
   const [roomCode, setRoomCode] = useState("");
 
   function createRoom() {
-    if (!username.trim()) {
+    if (!createUsername.trim()) {
       alert("Enter username");
       return;
     }
 
-    router.push(`/room/temp?username=${username}`);
+    const ws = getSocket();
+
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          type: "create",
+          username: createUsername,
+        })
+      );
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "room-created") {
+        router.push(`/room/${data.roomCode}`);
+      }
+
+      if (data.type === "error") {
+        alert(data.message);
+      }
+    };
   }
 
   function joinRoom() {
-    if (!username.trim() || !roomCode.trim()) {
+    if (!joinUsername.trim() || !roomCode.trim()) {
       alert("Enter username and room code");
       return;
     }
 
-    router.push(`/room/${roomCode}?username=${username}`);
+    router.push(`/room/${roomCode}?username=${joinUsername}`);
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-black flex items-center justify-center text-white">
-      <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-xl p-8 space-y-6">
+    <main className="min-h-screen bg-linear-to-br from-slate-900 to-black flex items-center justify-center text-white">
+      <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-xl p-8 space-y-8">
         <h1 className="text-3xl font-bold text-center">Group Chat</h1>
 
-        {/* Username */}
-        <div>
-          <label className="block text-sm mb-1 text-gray-300">Username</label>
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">Create Room</h2>
+
           <input
             className="w-full px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your name"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            value={createUsername}
+            onChange={(e) => setCreateUsername(e.target.value)}
           />
-        </div>
 
-        {/* Create */}
-        <button
-          onClick={createRoom}
-          className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-semibold"
-        >
-          Create Room
-        </button>
+          <button
+            onClick={createRoom}
+            className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-semibold"
+          >
+            Create Room
+          </button>
+        </div>
 
         <div className="flex items-center gap-4 text-gray-400">
           <div className="flex-1 h-px bg-gray-600" />
@@ -57,23 +79,30 @@ export default function HomePage() {
           <div className="flex-1 h-px bg-gray-600" />
         </div>
 
-        {/* Join */}
-        <div>
-          <label className="block text-sm mb-1 text-gray-300">Room Code</label>
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">Join Room</h2>
+
+          <input
+            className="w-full px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Username"
+            value={joinUsername}
+            onChange={(e) => setJoinUsername(e.target.value)}
+          />
+
           <input
             className="w-full px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 uppercase"
-            placeholder="ABCD"
+            placeholder="Room code"
             value={roomCode}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
           />
-        </div>
 
-        <button
-          onClick={joinRoom}
-          className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 transition font-semibold"
-        >
-          Join Room
-        </button>
+          <button
+            onClick={joinRoom}
+            className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 transition font-semibold"
+          >
+            Join Room
+          </button>
+        </div>
       </div>
     </main>
   );
