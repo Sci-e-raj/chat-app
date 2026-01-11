@@ -1,50 +1,80 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getSocket } from "@/lib/socket";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
+
   const [username, setUsername] = useState("");
   const [roomCode, setRoomCode] = useState("");
 
   function createRoom() {
-    const ws = getSocket();
+    if (!username.trim()) {
+      alert("Enter username");
+      return;
+    }
 
-    ws.onopen = () => {
-      ws.send(
-        JSON.stringify({
-          type: "create",
-          username,
-        })
-      );
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "room-created") {
-        router.push(`/room/${data.roomCode}`);
-      }
-
-      if (data.type === "error") {
-        alert(data.message);
-      }
-    };
+    router.push(`/room/temp?username=${username}`);
   }
 
   function joinRoom() {
+    if (!username.trim() || !roomCode.trim()) {
+      alert("Enter username and room code");
+      return;
+    }
+
     router.push(`/room/${roomCode}?username=${username}`);
   }
 
   return (
-    <main>
-      <input value={username} onChange={(e) => setUsername(e.target.value)} />
-      <button onClick={createRoom}>Create Room</button>
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-black flex items-center justify-center text-white">
+      <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-xl p-8 space-y-6">
+        <h1 className="text-3xl font-bold text-center">Group Chat</h1>
 
-      <input value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
-      <button onClick={joinRoom}>Join Room</button>
+        {/* Username */}
+        <div>
+          <label className="block text-sm mb-1 text-gray-300">Username</label>
+          <input
+            className="w-full px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your name"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+
+        {/* Create */}
+        <button
+          onClick={createRoom}
+          className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-semibold"
+        >
+          Create Room
+        </button>
+
+        <div className="flex items-center gap-4 text-gray-400">
+          <div className="flex-1 h-px bg-gray-600" />
+          OR
+          <div className="flex-1 h-px bg-gray-600" />
+        </div>
+
+        {/* Join */}
+        <div>
+          <label className="block text-sm mb-1 text-gray-300">Room Code</label>
+          <input
+            className="w-full px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 uppercase"
+            placeholder="ABCD"
+            value={roomCode}
+            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+          />
+        </div>
+
+        <button
+          onClick={joinRoom}
+          className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 transition font-semibold"
+        >
+          Join Room
+        </button>
+      </div>
     </main>
   );
 }
