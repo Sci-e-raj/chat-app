@@ -15,13 +15,18 @@ function generateRoomCode() {
 }
 
 wss.on("connection", (socket) => {
-  console.log("new user created");
+  console.log("new user connected");
 
   socket.roomCode = null;
   socket.username = null;
 
   socket.on("message", (data) => {
-    const message = JSON.parse(data.toString());
+    let message;
+    try {
+      message = JSON.parse(data.toString());
+    } catch {
+      return;
+    }
 
     if (message.type === "create") {
       const roomCode = generateRoomCode();
@@ -39,7 +44,8 @@ wss.on("connection", (socket) => {
         })
       );
 
-      console.log(`${message.username} created room ${roomCode}`);
+      console.log(`${socket.username} created room ${roomCode}`);
+      return;
     }
 
     if (message.type === "join") {
@@ -52,10 +58,11 @@ wss.on("connection", (socket) => {
             message: "Room doesn't exist",
           })
         );
+        return;
       }
 
       rooms[roomCode].add(socket);
-      socket.username = message.username;
+      socket.username = username;
       socket.roomCode = roomCode;
 
       socket.send(
@@ -65,22 +72,25 @@ wss.on("connection", (socket) => {
         })
       );
 
-      console.log(`${message.username} joined the room ${roomCode}`);
+      console.log(`${socket.username} joined room ${roomCode}`);
+      return;
     }
 
     if (message.type === "chat") {
       const roomCode = socket.roomCode;
 
-      if (!rooms[roomCode]) return;
+      if (!roomCode || !rooms[roomCode]) return;
 
       rooms[roomCode].forEach((client) => {
-        client.send(
-          JSON.stringify({
-            type: "chat",
-            user: "socket.username",
-            message: "message.message",
-          })
-        );
+        if (client.readyState === 1) {
+          client.send(
+            JSON.stringify({
+              type: "chat",
+              user: socket.username,
+              message: message.message,
+            })
+          );
+        }
       });
     }
   });
@@ -88,14 +98,15 @@ wss.on("connection", (socket) => {
   socket.on("close", () => {
     const roomCode = socket.roomCode;
 
-    if (roomCode && rooms[roomCode]) {
-      rooms[roomCode].delete(socket);
+    if (!roomCode || !rooms[roomCode]) return;
 
-      if (rooms[roomCode].size === 0) {
-        delete rooms[roomCode];
-      }
+    rooms[roomCode].delete(socket);
 
-      console.log(`${socket.username} disconnected`);
+    if (rooms[roomCode].size === 0) {
+      delete rooms[roomCode];
+      console.log(`Room ${roomCode} deleted`);
     }
+
+    console.log(`${socket.username} disconnected`);
   });
 });
