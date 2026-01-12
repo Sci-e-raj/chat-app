@@ -81,7 +81,7 @@ export default function RoomPage() {
   }
 
   return (
-    <main className="h-screen bg-gradient-to-br from-slate-900 to-black text-white flex flex-col">
+    <main className="h-screen bg-linear-to-br from-slate-900 to-black text-white flex flex-col">
       {/* Header */}
       <header className="p-4 border-b border-slate-700 shrink-0">
         <h1 className="flex justify-center gap-1 text-xl font-semibold">
