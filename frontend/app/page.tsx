@@ -33,6 +33,7 @@ export default function HomePage() {
 
       if (data.type === "room-created") {
         router.push(`/room/${data.roomCode}`);
+        localStorage.setItem("username", createUsername);
       }
 
       if (data.type === "error") {
