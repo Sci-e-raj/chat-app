@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 
@@ -18,12 +18,17 @@ export default function RoomPage() {
   const [currentUser, setCurrentUser] = useState<string | null>(username);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!currentUser) {
       setCurrentUser(localStorage.getItem("username"));
     }
   }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     const ws = getSocket();
@@ -111,6 +116,9 @@ export default function RoomPage() {
             </div>
           </div>
         ))}
+
+        {/* Auto-scroll anchor */}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
