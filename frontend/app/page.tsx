@@ -32,8 +32,9 @@ export default function HomePage() {
       const data = JSON.parse(event.data);
 
       if (data.type === "room-created") {
-        router.push(`/room/${data.roomCode}`);
         localStorage.setItem("username", createUsername);
+        localStorage.setItem("role", "creator");
+        router.push(`/room/${data.roomCode}`);
       }
 
       if (data.type === "error") {
@@ -48,7 +49,31 @@ export default function HomePage() {
       return;
     }
 
-    router.push(`/room/${roomCode}?username=${joinUsername}`);
+    const ws = getSocket();
+
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          type: "join",
+          roomCode,
+          username: joinUsername,
+        })
+      );
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "joined") {
+        localStorage.setItem("username", joinUsername);
+        localStorage.setItem("role", "joiner");
+        router.push(`/room/${roomCode}`);
+      }
+
+      if (data.type === "error") {
+        alert(data.message);
+      }
+    };
   }
 
   return (

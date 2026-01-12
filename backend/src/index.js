@@ -61,6 +61,10 @@ wss.on("connection", (socket) => {
         return;
       }
 
+      if (socket.roomCode === roomCode) {
+        return;
+      }
+
       rooms[roomCode].add(socket);
       socket.username = username;
       socket.roomCode = roomCode;
@@ -71,6 +75,17 @@ wss.on("connection", (socket) => {
           roomCode,
         })
       );
+
+      rooms[roomCode].forEach((client) => {
+        if (client !== socket) {
+          client.send(
+            JSON.stringify({
+              type: "system",
+              message: `${username} joined the room`,
+            })
+          );
+        }
+      });
 
       console.log(`${socket.username} joined room ${roomCode}`);
       return;
@@ -101,6 +116,15 @@ wss.on("connection", (socket) => {
     if (!roomCode || !rooms[roomCode]) return;
 
     rooms[roomCode].delete(socket);
+
+    rooms[roomCode].forEach((client) => {
+      client.send(
+        JSON.stringify({
+          type: "system",
+          message: `${socket.username} left the room`,
+        })
+      );
+    });
 
     if (rooms[roomCode].size === 0) {
       delete rooms[roomCode];
