@@ -16,6 +16,7 @@ export default function RoomPage() {
   const searchParams = useSearchParams();
 
   const usernameRef = useRef<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -108,12 +109,31 @@ export default function RoomPage() {
     setInput("");
   }
 
+  function copyRoomCode() {
+    if (!roomId) return;
+
+    navigator.clipboard.writeText(roomId.toString());
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+  }
+
   return (
     <main className="h-screen bg-linear-to-br from-slate-900 to-black text-white flex flex-col">
-      <header className="p-4 border-b border-slate-700 shrink-0">
-        <h1 className="flex justify-center gap-1 text-xl font-semibold">
+      <header className="p-4 border-b border-slate-700 shrink-0 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">
           Room <span className="text-blue-400">{roomId}</span>
         </h1>
+
+        <button
+          onClick={copyRoomCode}
+          className="px-3 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-sm transition"
+        >
+          {copied ? "Copied!" : "Copy code"}
+        </button>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
