@@ -1,5 +1,5 @@
 const express = require("express");
-const { WebSocketServer } = require("ws");
+const { WebSocketServer, WebSocket } = require("ws");
 
 const app = express();
 const server = app.listen(3001, () => {
@@ -23,7 +23,7 @@ function broadcastUsers(roomCode) {
     .filter(Boolean);
 
   room.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.readyState === 1) {
       client.send(
         JSON.stringify({
           type: "users",
@@ -91,8 +91,6 @@ wss.on("connection", (socket) => {
       socket.username = username;
       socket.roomCode = roomCode;
 
-      broadcastUsers(roomCode);
-
       socket.send(
         JSON.stringify({
           type: "joined",
@@ -101,7 +99,7 @@ wss.on("connection", (socket) => {
       );
 
       rooms[roomCode].forEach((client) => {
-        if (client !== socket) {
+        if (client !== socket && client.readyState == 1) {
           client.send(
             JSON.stringify({
               type: "system",
@@ -110,6 +108,8 @@ wss.on("connection", (socket) => {
           );
         }
       });
+
+      broadcastUsers(roomCode);
 
       console.log(`${socket.username} joined room ${roomCode}`);
       return;
@@ -131,6 +131,17 @@ wss.on("connection", (socket) => {
           );
         }
       });
+    }
+
+    if (message.type === "get-users") {
+      const room = rooms[socket.roomCode];
+      if (!room) return;
+
+      const users = Array.from(room)
+        .map((s) => s.username)
+        .filter(Boolean);
+
+      socket.send(JSON.stringify({ type: "users", users }));
     }
   });
 

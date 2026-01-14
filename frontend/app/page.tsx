@@ -28,7 +28,20 @@ export default function HomePage() {
       );
     };
 
-    ws.onmessage = (event) => {
+    // ws.onmessage = (event) => {
+    //   const data = JSON.parse(event.data);
+
+    //   if (data.type === "room-created") {
+    //     localStorage.setItem("username", createUsername);
+    //     localStorage.setItem("role", "creator");
+    //     router.push(`/room/${data.roomCode}`);
+    //   }
+
+    //   if (data.type === "error") {
+    //     alert(data.message);
+    //   }
+    // };
+    const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
       if (data.type === "room-created") {
@@ -37,10 +50,18 @@ export default function HomePage() {
         router.push(`/room/${data.roomCode}`);
       }
 
+      if (data.type === "joined") {
+        localStorage.setItem("username", joinUsername);
+        localStorage.setItem("role", "joiner");
+        router.push(`/room/${roomCode}`);
+      }
+
       if (data.type === "error") {
         alert(data.message);
       }
     };
+
+    ws.addEventListener("message", handleMessage);
   }
 
   function joinRoom() {

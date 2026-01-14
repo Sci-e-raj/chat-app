@@ -55,17 +55,69 @@ export default function RoomPage() {
   useEffect(() => {
     const ws = getSocket();
 
-    const joinRoom = () => {
-      if (!usernameRef.current) return;
+    const requestUsers = () => {
+      ws.send(JSON.stringify({ type: "get-users" }));
     };
 
-    if (ws.readyState === WebSocket.OPEN) {
-      joinRoom();
-    } else {
-      ws.onopen = joinRoom;
-    }
+    if (ws.readyState === WebSocket.OPEN) requestUsers();
+    else ws.addEventListener("open", requestUsers);
 
-    ws.onmessage = (event) => {
+    return () => ws.removeEventListener("open", requestUsers);
+  }, []);
+
+  // useEffect(() => {
+  //   const ws = getSocket();
+
+  //   const joinRoom = () => {
+  //     if (!usernameRef.current) return;
+  //   };
+
+  //   if (ws.readyState === WebSocket.OPEN) {
+  //     joinRoom();
+  //   } else {
+  //     ws.onopen = joinRoom;
+  //   }
+
+  //   ws.onmessage = (event) => {
+  //     const data = JSON.parse(event.data);
+
+  //     if (data.type === "chat") {
+  //       setMessages((prev) => [
+  //         ...prev,
+  //         {
+  //           user: data.user,
+  //           message: data.message,
+  //           self: data.user === usernameRef.current,
+  //         },
+  //       ]);
+  //     }
+
+  //     if (data.type === "system") {
+  //       setMessages((prev) => [
+  //         ...prev,
+  //         { message: data.message, system: true },
+  //       ]);
+  //     }
+
+  //     if (data.type === "error") {
+  //       alert(data.message);
+  //     }
+
+  //     if (data.type === "users") {
+  //       setUsers(data.users);
+  //     }
+  //   };
+
+  //   return () => {
+  //     ws.onmessage = null;
+  //     ws.onopen = null;
+  //   };
+  // }, [roomId]);
+
+  useEffect(() => {
+    const ws = getSocket();
+
+    const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
       if (data.type === "chat") {
@@ -86,20 +138,21 @@ export default function RoomPage() {
         ]);
       }
 
-      if (data.type === "error") {
-        alert(data.message);
-      }
-
       if (data.type === "users") {
         setUsers(data.users);
       }
+
+      if (data.type === "error") {
+        alert(data.message);
+      }
     };
 
+    ws.addEventListener("message", handleMessage);
+
     return () => {
-      ws.onmessage = null;
-      ws.onopen = null;
+      ws.removeEventListener("message", handleMessage);
     };
-  }, [roomId]);
+  }, []);
 
   function sendMessage() {
     const ws = getSocket();
