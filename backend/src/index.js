@@ -14,6 +14,26 @@ function generateRoomCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
+function broadcastUsers(roomCode) {
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  const users = Array.from(room)
+    .map((s) => s.username)
+    .filter(Boolean);
+
+  room.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          type: "users",
+          users,
+        })
+      );
+    }
+  });
+}
+
 wss.on("connection", (socket) => {
   console.log("new user connected");
 
@@ -36,6 +56,8 @@ wss.on("connection", (socket) => {
 
       socket.roomCode = roomCode;
       socket.username = message.username;
+
+      broadcastUsers(roomCode);
 
       socket.send(
         JSON.stringify({
@@ -68,6 +90,8 @@ wss.on("connection", (socket) => {
       rooms[roomCode].add(socket);
       socket.username = username;
       socket.roomCode = roomCode;
+
+      broadcastUsers(roomCode);
 
       socket.send(
         JSON.stringify({
@@ -116,6 +140,7 @@ wss.on("connection", (socket) => {
     if (!roomCode || !rooms[roomCode]) return;
 
     rooms[roomCode].delete(socket);
+    broadcastUsers(socket.roomCode);
 
     rooms[roomCode].forEach((client) => {
       client.send(

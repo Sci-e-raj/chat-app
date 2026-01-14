@@ -17,6 +17,7 @@ export default function RoomPage() {
 
   const usernameRef = useRef<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [users, setUsers] = useState<string[]>([]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -88,6 +89,10 @@ export default function RoomPage() {
       if (data.type === "error") {
         alert(data.message);
       }
+
+      if (data.type === "users") {
+        setUsers(data.users);
+      }
     };
 
     return () => {
@@ -123,69 +128,82 @@ export default function RoomPage() {
 
   return (
     <main className="h-screen bg-linear-to-br from-slate-900 to-black text-white flex flex-col">
-      <header className="p-4 border-b border-slate-700 shrink-0 flex items-center justify-between">
+      {/* Header */}
+      <header className="p-4 border-b border-slate-700 flex justify-between">
         <h1 className="text-xl font-semibold">
           Room <span className="text-blue-400">{roomId}</span>
         </h1>
-
         <button
           onClick={copyRoomCode}
-          className="px-3 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-sm transition"
+          className="px-3 py-1 rounded bg-slate-700 text-sm"
         >
           {copied ? "Copied!" : "Copy code"}
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((m, i) => {
-          if (m.system) {
-            return (
-              <div key={i} className="text-center text-sm text-gray-400">
-                {m.message}
-              </div>
-            );
-          }
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Users */}
+        <aside className="w-48 border-r border-slate-700 p-3 text-sm hidden md:block">
+          <div className="font-semibold mb-2">
+            Users online ({users.length})
+          </div>
+          <ul className="space-y-1 text-gray-300">
+            {users.map((u) => (
+              <li key={u}>• {u}</li>
+            ))}
+          </ul>
+        </aside>
 
-          return (
-            <div
-              key={i}
-              className={`flex ${m.self ? "justify-end" : "justify-start"}`}
+        {/* Chat */}
+        <div className="flex-1 flex flex-col">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.map((m, i) =>
+              m.system ? (
+                <div key={i} className="text-center text-gray-400 text-sm">
+                  {m.message}
+                </div>
+              ) : (
+                <div
+                  key={i}
+                  className={`flex ${m.self ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-xl text-sm ${
+                      m.self
+                        ? "bg-green-600 rounded-br-none"
+                        : "bg-slate-800 rounded-bl-none"
+                    }`}
+                  >
+                    {!m.self && (
+                      <div className="text-xs text-gray-300 mb-1">{m.user}</div>
+                    )}
+                    {m.message}
+                  </div>
+                </div>
+              )
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-4 border-t border-slate-700 flex gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Type a message..."
+              className="flex-1 px-4 py-2 rounded bg-slate-700"
+            />
+            <button
+              onClick={sendMessage}
+              className="px-6 py-2 rounded bg-blue-600"
             >
-              <div
-                className={`max-w-xs px-4 py-2 rounded-xl text-sm
-                  ${
-                    m.self
-                      ? "bg-green-600 text-white rounded-br-none"
-                      : "bg-slate-800 text-white rounded-bl-none"
-                  }`}
-              >
-                {!m.self && (
-                  <div className="text-xs text-gray-300 mb-1">{m.user}</div>
-                )}
-                {m.message}
-              </div>
-            </div>
-          );
-        })}
-
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="p-4 border-t border-slate-700 shrink-0 flex gap-2 bg-slate-900">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 px-4 py-2 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
-
-        <button
-          onClick={sendMessage}
-          className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-semibold"
-        >
-          Send
-        </button>
+              Send
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   );
