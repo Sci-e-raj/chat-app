@@ -1,14 +1,32 @@
 import { getSocket } from "@/lib/socket";
 
-export function createRoom(username: string) {
-  const ws = getSocket();
-
-  return new Promise<string>((resolve, reject) => {
-    if (ws.readyState !== WebSocket.OPEN) {
-      reject("Connection not ready. Please try again.");
+function waitForSocketOpen(ws: WebSocket) {
+  return new Promise<void>((resolve, reject) => {
+    if (ws.readyState === WebSocket.OPEN) {
+      resolve();
       return;
     }
 
+    if (ws.readyState !== WebSocket.CONNECTING) {
+      reject(new Error("WebSocket not available"));
+      return;
+    }
+
+    const handleOpen = () => {
+      ws.removeEventListener("open", handleOpen);
+      resolve();
+    };
+
+    ws.addEventListener("open", handleOpen);
+  });
+}
+
+export async function createRoom(username: string) {
+  const ws = getSocket();
+
+  await waitForSocketOpen(ws);
+
+  return new Promise<string>((resolve, reject) => {
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
@@ -19,7 +37,7 @@ export function createRoom(username: string) {
 
       if (data.type === "error") {
         ws.removeEventListener("message", handleMessage);
-        reject(data.message);
+        reject(new Error(data.message));
       }
     };
 
@@ -34,15 +52,12 @@ export function createRoom(username: string) {
   });
 }
 
-export function joinRoom(username: string, roomCode: string) {
+export async function joinRoom(username: string, roomCode: string) {
   const ws = getSocket();
 
-  return new Promise<void>((resolve, reject) => {
-    if (ws.readyState !== WebSocket.OPEN) {
-      reject("Connection not ready. Please try again.");
-      return;
-    }
+  await waitForSocketOpen(ws);
 
+  return new Promise<void>((resolve, reject) => {
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
@@ -53,7 +68,7 @@ export function joinRoom(username: string, roomCode: string) {
 
       if (data.type === "error") {
         ws.removeEventListener("message", handleMessage);
-        reject(data.message);
+        reject(new Error(data.message));
       }
     };
 
