@@ -87,75 +87,124 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-slate-900 to-black flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl p-8 space-y-6">
-        <h1 className="text-3xl font-bold text-center text-white">
-          Group Chat
-        </h1>
+    <main className="relative min-h-screen overflow-hidden bg-black">
+      {/* background effects */}
+      <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-black to-slate-900" />
+      <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
+      <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl" />
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500 text-red-400 p-3 rounded text-sm">
-            {error}
+      {/* content */}
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.7)] p-8 space-y-6">
+          <h1 className="text-3xl font-bold text-center text-white tracking-tight">
+            Group Chat
+          </h1>
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          {/* Create Room */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
+              Create a room
+            </h2>
+
+            <input
+              value={createUsername}
+              onChange={(e) => setCreateUsername(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              disabled={loading}
+              placeholder="Your name"
+              className="w-full px-4 py-3 rounded-lg bg-slate-800 text-white placeholder-gray-400
+                       border border-slate-700
+                       focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
+                       transition outline-none"
+            />
+
+            <button
+              onClick={handleCreate}
+              disabled={loading}
+              className="w-full py-3 rounded-lg font-semibold
+                       bg-linear-to-r from-blue-600 to-indigo-600
+                       hover:from-blue-500 hover:to-indigo-500
+                       active:scale-[0.98]
+                       transition-all disabled:opacity-50"
+            >
+              {loading ? "Creating..." : "Create room"}
+            </button>
           </div>
-        )}
 
-        {/* Create Room */}
-        <div className="space-y-3">
-          <label className="text-sm text-gray-300">Create room</label>
+          <div className="flex items-center gap-3 text-gray-500 text-xs">
+            <div className="flex-1 h-px bg-gray-700" />
+            OR
+            <div className="flex-1 h-px bg-gray-700" />
+          </div>
 
-          <input
-            value={createUsername}
-            onChange={(e) => setCreateUsername(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            disabled={loading}
-            placeholder="Your name"
-            className="w-full px-4 py-2 rounded-lg bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          {/* Join Room */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
+              Join a room
+            </h2>
 
-          <button
-            onClick={handleCreate}
-            disabled={loading}
-            className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition font-semibold"
-          >
-            {loading ? "Creating..." : "Create room"}
-          </button>
-        </div>
+            <input
+              value={joinUsername}
+              onChange={(e) => setJoinUsername(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              disabled={loading}
+              placeholder="Your name"
+              className="w-full px-4 py-3 rounded-lg bg-slate-800 text-white placeholder-gray-400
+                       border border-slate-700
+                       focus:border-green-500 focus:ring-2 focus:ring-green-500/30
+                       transition outline-none"
+            />
 
-        <div className="flex items-center gap-3 text-gray-400 text-sm">
-          <div className="flex-1 h-px bg-gray-600" />
-          OR
-          <div className="flex-1 h-px bg-gray-600" />
-        </div>
+            {/* uniform input button with the UI */}
+            <input
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              disabled={loading}
+              placeholder="Room code"
+              className="w-full px-4 py-3 rounded-lg bg-slate-800 text-white
+             tracking-widest placeholder:tracking-normal
+             placeholder-gray-400
+             border border-slate-700
+             focus:border-green-500 focus:ring-2 focus:ring-green-500/30
+             transition outline-none"
+            />
+            {/* <input
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              disabled={loading}
+              placeholder="Room Code"
+              className="w-full px-4 py-3 rounded-lg bg-slate-800 text-white
+             font-mono tracking-[0.25em] placeholder:tracking-normal
+             placeholder-gray-400
+             border border-slate-700
+             focus:border-green-500 focus:ring-2 focus:ring-green-500/30
+             transition outline-none"
+            /> */}
 
-        {/* Join Room */}
-        <div className="space-y-3">
-          <label className="text-sm text-gray-300">Join room</label>
+            <button
+              onClick={handleJoin}
+              disabled={loading}
+              className="w-full py-3 rounded-lg font-semibold
+                       bg-linear-to-r from-green-600 to-emerald-600
+                       hover:from-green-500 hover:to-emerald-500
+                       active:scale-[0.98]
+                       transition-all disabled:opacity-50"
+            >
+              {loading ? "Joining..." : "Join room"}
+            </button>
+          </div>
 
-          <input
-            value={joinUsername}
-            onChange={(e) => setJoinUsername(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-            disabled={loading}
-            placeholder="Your name"
-            className="w-full px-4 py-2 rounded-lg bg-slate-700"
-          />
-
-          <input
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-            disabled={loading}
-            placeholder="ROOM CODE"
-            className="w-full px-4 py-2 rounded-lg bg-slate-700 tracking-widest"
-          />
-
-          <button
-            onClick={handleJoin}
-            disabled={loading}
-            className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 transition font-semibold"
-          >
-            {loading ? "Joining..." : "Join room"}
-          </button>
+          <p className="pt-4 text-center text-xs text-gray-500">
+            Realtime chat · No signup · Instant rooms
+          </p>
         </div>
       </div>
     </main>
