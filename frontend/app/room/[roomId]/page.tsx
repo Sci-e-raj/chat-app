@@ -65,55 +65,6 @@ export default function RoomPage() {
     return () => ws.removeEventListener("open", requestUsers);
   }, []);
 
-  // useEffect(() => {
-  //   const ws = getSocket();
-
-  //   const joinRoom = () => {
-  //     if (!usernameRef.current) return;
-  //   };
-
-  //   if (ws.readyState === WebSocket.OPEN) {
-  //     joinRoom();
-  //   } else {
-  //     ws.onopen = joinRoom;
-  //   }
-
-  //   ws.onmessage = (event) => {
-  //     const data = JSON.parse(event.data);
-
-  //     if (data.type === "chat") {
-  //       setMessages((prev) => [
-  //         ...prev,
-  //         {
-  //           user: data.user,
-  //           message: data.message,
-  //           self: data.user === usernameRef.current,
-  //         },
-  //       ]);
-  //     }
-
-  //     if (data.type === "system") {
-  //       setMessages((prev) => [
-  //         ...prev,
-  //         { message: data.message, system: true },
-  //       ]);
-  //     }
-
-  //     if (data.type === "error") {
-  //       alert(data.message);
-  //     }
-
-  //     if (data.type === "users") {
-  //       setUsers(data.users);
-  //     }
-  //   };
-
-  //   return () => {
-  //     ws.onmessage = null;
-  //     ws.onopen = null;
-  //   };
-  // }, [roomId]);
-
   useEffect(() => {
     const ws = getSocket();
 
