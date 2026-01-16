@@ -9,6 +9,7 @@ type ChatMessage = {
   message: string;
   self?: boolean;
   system?: boolean;
+  time?: string;
 };
 
 export default function RoomPage() {
@@ -18,56 +19,51 @@ export default function RoomPage() {
   const usernameRef = useRef<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [users, setUsers] = useState<string[]>([]);
-
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  /* ---------- username ---------- */
   useEffect(() => {
     const urlUser = searchParams.get("username");
     const storedUser = localStorage.getItem("username");
-
     usernameRef.current = urlUser ?? storedUser;
+    if (!usernameRef.current) alert("Username missing. Go back.");
+  }, [searchParams]);
 
-    if (!usernameRef.current) {
-      alert("Username missing. Go back.");
-    }
-  }, []);
-
+  /* ---------- auto scroll ---------- */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
+  /* ---------- creator system msg ---------- */
   useEffect(() => {
     const role = localStorage.getItem("role");
     const username = localStorage.getItem("username");
-
-    if (role === "creator") {
+    if (role === "creator" && username) {
       setMessages([
         {
           message: `${username} created the room`,
           system: true,
+          time: getTime(),
         },
       ]);
     }
   }, []);
 
+  /* ---------- request users ---------- */
   useEffect(() => {
     const ws = getSocket();
-
-    const requestUsers = () => {
-      ws.send(JSON.stringify({ type: "get-users" }));
-    };
-
-    if (ws.readyState === WebSocket.OPEN) requestUsers();
-    else ws.addEventListener("open", requestUsers);
-
+    const requestUsers = () => ws.send(JSON.stringify({ type: "get-users" }));
+    ws.readyState === WebSocket.OPEN
+      ? requestUsers()
+      : ws.addEventListener("open", requestUsers);
     return () => ws.removeEventListener("open", requestUsers);
   }, []);
 
+  /* ---------- socket messages ---------- */
   useEffect(() => {
     const ws = getSocket();
-
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
@@ -78,6 +74,7 @@ export default function RoomPage() {
             user: data.user,
             message: data.message,
             self: data.user === usernameRef.current,
+            time: getTime(),
           },
         ]);
       }
@@ -85,105 +82,140 @@ export default function RoomPage() {
       if (data.type === "system") {
         setMessages((prev) => [
           ...prev,
-          { message: data.message, system: true },
+          { message: data.message, system: true, time: getTime() },
         ]);
       }
 
-      if (data.type === "users") {
-        setUsers(data.users);
-      }
-
-      if (data.type === "error") {
-        alert(data.message);
-      }
+      if (data.type === "users") setUsers(data.users);
+      if (data.type === "error") alert(data.message);
     };
 
     ws.addEventListener("message", handleMessage);
-
-    return () => {
-      ws.removeEventListener("message", handleMessage);
-    };
+    return () => ws.removeEventListener("message", handleMessage);
   }, []);
 
+  /* ---------- send ---------- */
   function sendMessage() {
     const ws = getSocket();
     if (ws.readyState !== WebSocket.OPEN || !input.trim()) return;
-
-    ws.send(
-      JSON.stringify({
-        type: "chat",
-        message: input,
-      })
-    );
+    ws.send(JSON.stringify({ type: "chat", message: input.trim() }));
     setInput("");
   }
 
+  /* ---------- utils ---------- */
   function copyRoomCode() {
     if (!roomId) return;
-
     navigator.clipboard.writeText(roomId.toString());
-
     setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
-    setTimeout(() => {
-      setCopied(false);
-    }, 1500);
+  function getTime() {
+    return new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   return (
-    <main className="h-screen bg-linear-to-br from-slate-900 to-black text-white flex flex-col">
+    <main className="relative h-screen overflow-hidden bg-linear-to-br from-slate-900 via-black to-slate-900 text-white flex flex-col">
+      {/* background glow */}
+      <div className="absolute -top-40 -left-40 h-96 w-96 bg-blue-500/20 blur-[120px]" />
+      <div className="absolute bottom-0 right-0 h-96 w-96 bg-purple-500/20 blur-[140px]" />
+
       {/* Header */}
-      <header className="p-4 border-b border-slate-700 flex justify-between">
-        <h1 className="text-xl font-semibold">
-          Room <span className="text-blue-400">{roomId}</span>
-        </h1>
+      <header className="relative z-10 p-4 border-b border-white/10 backdrop-blur bg-black/40 flex justify-between items-center">
+        <div>
+          <h1 className="text-lg font-semibold">
+            Room{" "}
+            <span className="px-2 py-1 ml-1 rounded-lg bg-blue-500/20 text-blue-400">
+              {roomId}
+            </span>
+          </h1>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Real-time · WebSocket powered
+          </p>
+        </div>
+
         <button
           onClick={copyRoomCode}
-          className="px-3 py-1 rounded bg-slate-700 text-sm"
+          className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition"
         >
           {copied ? "Copied!" : "Copy code"}
         </button>
       </header>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative z-10 flex flex-1 overflow-hidden">
         {/* Users */}
-        <aside className="w-48 border-r border-slate-700 p-3 text-sm hidden md:block">
-          <div className="font-semibold mb-2">
+        <aside className="w-56 hidden md:block p-4 border-r border-white/10 backdrop-blur bg-white/5">
+          <div className="font-semibold mb-3 text-sm">
             Users online ({users.length})
           </div>
-          <ul className="space-y-1 text-gray-300">
+          <ul className="space-y-2 text-gray-300 text-sm">
             {users.map((u) => (
-              <li key={u}>• {u}</li>
+              <li key={u} className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                {u}
+                {u === usernameRef.current && (
+                  <span className="text-xs text-blue-400">(you)</span>
+                )}
+              </li>
             ))}
           </ul>
         </aside>
 
         {/* Chat */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col bg-white/5 backdrop-blur-xl">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll relative">
+            {messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 text-sm">
+                <div className="text-4xl mb-2">💬</div>
+                Start the conversation
+              </div>
+            )}
+
             {messages.map((m, i) =>
               m.system ? (
-                <div key={i} className="text-center text-gray-400 text-sm">
+                <div
+                  key={i}
+                  // className="mx-auto px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/10 text-xs italic text-gray-400 shadow"
+                  className="text-center text-gray-400 text-xs italic"
+                >
                   {m.message}
                 </div>
               ) : (
                 <div
                   key={i}
-                  className={`flex ${m.self ? "justify-end" : "justify-start"}`}
+                  className={`flex message-enter ${
+                    m.self ? "justify-end" : "justify-start"
+                  }`}
                 >
-                  <div
-                    className={`max-w-xs px-4 py-2 rounded-xl text-sm ${
-                      m.self
-                        ? "bg-green-600 rounded-br-none"
-                        : "bg-slate-800 rounded-bl-none"
-                    }`}
-                  >
+                  <div className="flex items-end gap-2 max-w-[75%]">
                     {!m.self && (
-                      <div className="text-xs text-gray-300 mb-1">{m.user}</div>
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">
+                        {m.user?.[0]?.toUpperCase()}
+                      </div>
                     )}
-                    {m.message}
+
+                    <div
+                      className={`px-4 py-2 rounded-2xl text-sm shadow-md ${
+                        m.self
+                          ? "bg-linear-to-br from-green-500 to-emerald-600 rounded-br-none"
+                          : "bg-linear-to-br from-slate-700 to-slate-800 rounded-bl-none"
+                      }`}
+                    >
+                      {!m.self && (
+                        <div className="text-xs text-gray-300 mb-1">
+                          {m.user}
+                        </div>
+                      )}
+                      <div>{m.message}</div>
+                      <div className="text-[10px] text-gray-300 mt-1 text-right">
+                        {m.time}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )
@@ -192,20 +224,23 @@ export default function RoomPage() {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-slate-700 flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Type a message..."
-              className="flex-1 px-4 py-2 rounded bg-slate-700"
-            />
-            <button
-              onClick={sendMessage}
-              className="px-6 py-2 rounded bg-blue-600"
-            >
-              Send
-            </button>
+          <div className="p-4 border-t border-white/10 backdrop-blur bg-black/40">
+            <div className="flex gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Type a message..."
+                className="flex-1 px-5 py-3 rounded-full bg-white/10 text-white placeholder-gray-400
+                           border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              />
+              <button
+                onClick={sendMessage}
+                className="p-3 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition"
+              >
+                ➤
+              </button>
+            </div>
           </div>
         </div>
       </div>
