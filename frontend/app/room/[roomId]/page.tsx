@@ -22,7 +22,8 @@ export default function RoomPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
-
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const lastTypingRef = useRef(0);
   /* ---------- username ---------- */
   useEffect(() => {
     const urlUser = searchParams.get("username");
@@ -88,6 +89,18 @@ export default function RoomPage() {
 
       if (data.type === "users") setUsers(data.users);
       if (data.type === "error") alert(data.message);
+
+      if (data.type === "typing") {
+        // Add user to typingUsers if not already present
+        setTypingUsers((prev) =>
+          prev.includes(data.user) ? prev : [...prev, data.user],
+        );
+
+        // Remove after 2 seconds automatically
+        setTimeout(() => {
+          setTypingUsers((prev) => prev.filter((u) => u !== data.user));
+        }, 2000);
+      }
     };
 
     ws.addEventListener("message", handleMessage);
@@ -218,8 +231,28 @@ export default function RoomPage() {
                     </div>
                   </div>
                 </div>
-              )
+              ),
             )}
+
+            {/* Typing indicator */}
+            {typingUsers.length > 0 && (
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">
+                  {typingUsers[0]?.[0]?.toUpperCase()}
+                </div>
+                <div className="inline-flex items-center px-4 py-2 rounded-2xl bg-white/10 shadow animate-pulse">
+                  <span className="dot-typing"></span>
+                  <span className="dot-typing"></span>
+                  <span className="dot-typing"></span>
+                  <span className="ml-2 text-xs text-gray-300">
+                    {typingUsers.length === 1
+                      ? `${typingUsers[0]} is typing...`
+                      : `${typingUsers.join(", ")} are typing...`}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div ref={bottomRef} />
           </div>
 
@@ -228,12 +261,30 @@ export default function RoomPage() {
             <div className="flex gap-2">
               <input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+
+                  const username = usernameRef.current;
+                  if (!username) return;
+
+                  const now = Date.now();
+                  if (now - lastTypingRef.current > 500) {
+                    lastTypingRef.current = now;
+
+                    const ws = getSocket();
+                    if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(
+                        JSON.stringify({ type: "typing", user: username }),
+                      );
+                    }
+                  }
+                }}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 placeholder="Type a message..."
                 className="flex-1 px-5 py-3 rounded-full bg-white/10 text-white placeholder-gray-400
-                           border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+             border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               />
+
               <button
                 onClick={sendMessage}
                 className="p-3 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition"

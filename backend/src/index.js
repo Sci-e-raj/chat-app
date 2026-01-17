@@ -28,7 +28,7 @@ function broadcastUsers(roomCode) {
         JSON.stringify({
           type: "users",
           users,
-        })
+        }),
       );
     }
   });
@@ -63,7 +63,7 @@ wss.on("connection", (socket) => {
         JSON.stringify({
           type: "room-created",
           roomCode,
-        })
+        }),
       );
 
       console.log(`${socket.username} created room ${roomCode}`);
@@ -78,7 +78,7 @@ wss.on("connection", (socket) => {
           JSON.stringify({
             type: "error",
             message: "Room doesn't exist",
-          })
+          }),
         );
         return;
       }
@@ -95,7 +95,7 @@ wss.on("connection", (socket) => {
         JSON.stringify({
           type: "joined",
           roomCode,
-        })
+        }),
       );
 
       rooms[roomCode].forEach((client) => {
@@ -104,7 +104,7 @@ wss.on("connection", (socket) => {
             JSON.stringify({
               type: "system",
               message: `${username} joined the room`,
-            })
+            }),
           );
         }
       });
@@ -127,7 +127,7 @@ wss.on("connection", (socket) => {
               type: "chat",
               user: socket.username,
               message: message.message,
-            })
+            }),
           );
         }
       });
@@ -142,6 +142,23 @@ wss.on("connection", (socket) => {
         .filter(Boolean);
 
       socket.send(JSON.stringify({ type: "users", users }));
+    }
+
+    if (message.type === "typing") {
+      const roomCode = socket.roomCode;
+      if (!roomCode || !rooms[roomCode]) return;
+
+      rooms[roomCode].forEach((client) => {
+        if (client !== socket && client.readyState === 1) {
+          client.send(
+            JSON.stringify({
+              type: "typing",
+              user: socket.username,
+            }),
+          );
+        }
+      });
+      return;
     }
   });
 
@@ -158,7 +175,7 @@ wss.on("connection", (socket) => {
         JSON.stringify({
           type: "system",
           message: `${socket.username} left the room`,
-        })
+        }),
       );
     });
 

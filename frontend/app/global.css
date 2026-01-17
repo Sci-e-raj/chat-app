@@ -44,3 +44,34 @@ html {
   animation: messageIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform, opacity;
 }
+
+.dot-typing {
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dot-typing:nth-child(1) {
+  animation-delay: 0s;
+}
+.dot-typing:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dot-typing:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
