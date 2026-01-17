@@ -91,6 +91,11 @@ export default function RoomPage() {
       if (data.type === "error") alert(data.message);
 
       if (data.type === "typing") {
+        if (!data.active) {
+          setTypingUsers((prev) => prev.filter((u) => u !== data.user));
+          return;
+        }
+
         // Add user to typingUsers if not already present
         setTypingUsers((prev) =>
           prev.includes(data.user) ? prev : [...prev, data.user],
@@ -111,6 +116,13 @@ export default function RoomPage() {
   function sendMessage() {
     const ws = getSocket();
     if (ws.readyState !== WebSocket.OPEN || !input.trim()) return;
+    ws.send(
+      JSON.stringify({
+        type: "typing",
+        user: usernameRef.current,
+        active: false,
+      }),
+    );
     ws.send(JSON.stringify({ type: "chat", message: input.trim() }));
     setInput("");
   }
@@ -274,7 +286,11 @@ export default function RoomPage() {
                     const ws = getSocket();
                     if (ws.readyState === WebSocket.OPEN) {
                       ws.send(
-                        JSON.stringify({ type: "typing", user: username }),
+                        JSON.stringify({
+                          type: "typing",
+                          user: username,
+                          active: true,
+                        }),
                       );
                     }
                   }

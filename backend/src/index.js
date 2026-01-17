@@ -154,6 +154,7 @@ wss.on("connection", (socket) => {
             JSON.stringify({
               type: "typing",
               user: socket.username,
+              active: message.active,
             }),
           );
         }
