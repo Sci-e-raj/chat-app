@@ -208,7 +208,9 @@ export default function RoomPage() {
                   // className="mx-auto px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/10 text-xs italic text-gray-400 shadow"
                   className="text-center text-gray-400 text-xs italic"
                 >
-                  {m.message}
+                  <div className="whitespace-pre-wrap wrap-break-word max-w-full">
+                    {m.message}
+                  </div>
                 </div>
               ) : (
                 <div
