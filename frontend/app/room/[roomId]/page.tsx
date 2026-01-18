@@ -208,7 +208,14 @@ export default function RoomPage() {
                   // className="mx-auto px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/10 text-xs italic text-gray-400 shadow"
                   className="text-center text-gray-400 text-xs italic"
                 >
-                  <div className="whitespace-pre-wrap wrap-break-word max-w-full">
+                  {/* <div className="message-text">{m.message}</div> */}
+                  <div
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-word",
+                    }}
+                  >
                     {m.message}
                   </div>
                 </div>
@@ -238,7 +245,17 @@ export default function RoomPage() {
                           {m.user}
                         </div>
                       )}
-                      <div>{m.message}</div>
+                      {/* <div className="message-text">{m.message}</div> */}
+                      <div
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          overflowWrap: "anywhere",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {m.message}
+                      </div>
+
                       <div className="text-[10px] text-gray-300 mt-1 text-right">
                         {m.time}
                       </div>
