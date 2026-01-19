@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { getSocket } from "@/lib/socket";
+import { Send } from "lucide-react";
 
 type ChatMessage = {
   user?: string;
@@ -151,15 +152,13 @@ export default function RoomPage() {
       {/* Header */}
       <header className="relative z-10 p-4 border-b border-white/10 backdrop-blur bg-black/40 flex justify-between items-center">
         <div>
-          <h1 className="text-lg font-semibold">
-            Room{" "}
-            <span className="px-2 py-1 ml-1 rounded-lg bg-blue-500/20 text-blue-400">
+          <h1 className="text-lg font-semibold flex items-center gap-2">
+            Room
+            <span className="px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400">
               {roomId}
             </span>
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
           </h1>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Real-time · WebSocket powered
-          </p>
         </div>
 
         <button
@@ -175,7 +174,7 @@ export default function RoomPage() {
         {/* Users */}
         <aside className="w-56 hidden md:block p-4 border-r border-white/10 backdrop-blur bg-white/5">
           <div className="font-semibold mb-3 text-sm">
-            Users online ({users.length})
+            Users Online ({users.length})
           </div>
           <ul className="space-y-2 text-gray-300 text-sm">
             {users.map((u) => (
@@ -205,10 +204,8 @@ export default function RoomPage() {
               m.system ? (
                 <div
                   key={i}
-                  // className="mx-auto px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/10 text-xs italic text-gray-400 shadow"
                   className="text-center text-gray-400 text-xs italic"
                 >
-                  {/* <div className="message-text">{m.message}</div> */}
                   <div
                     style={{
                       whiteSpace: "pre-wrap",
@@ -245,7 +242,6 @@ export default function RoomPage() {
                           {m.user}
                         </div>
                       )}
-                      {/* <div className="message-text">{m.message}</div> */}
                       <div
                         style={{
                           whiteSpace: "pre-wrap",
@@ -317,14 +313,23 @@ export default function RoomPage() {
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 placeholder="Type a message..."
                 className="flex-1 px-5 py-3 rounded-full bg-white/10 text-white placeholder-gray-400
-             border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               />
 
               <button
                 onClick={sendMessage}
-                className="p-3 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition"
+                disabled={!input.trim()}
+                className="
+                            flex items-center justify-center
+                            w-12 h-12 rounded-full
+                            bg-linear-to-br from-blue-600 to-indigo-600
+                            hover:from-blue-500 hover:to-indigo-500
+                            active:scale-90
+                            transition-all
+                            disabled:opacity-40
+                          "
               >
-                ➤
+                <Send className="w-5 h-5 rotate-45" />
               </button>
             </div>
           </div>

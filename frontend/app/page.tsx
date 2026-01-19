@@ -79,6 +79,7 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-black to-slate-900" />
       <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl" />
+
       {/* glowing background blobs */}
       <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/40 blur-[100px] animate-blob animate-pulseBlob" />
       <div
