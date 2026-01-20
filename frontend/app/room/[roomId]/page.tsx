@@ -286,10 +286,15 @@ export default function RoomPage() {
           {/* Input */}
           <div className="p-4 border-t border-white/10 backdrop-blur bg-black/40">
             <div className="flex gap-2">
-              <input
+              <textarea
                 value={input}
+                rows={1}
                 onChange={(e) => {
                   setInput(e.target.value);
+
+                  // auto-grow
+                  e.target.style.height = "0px";
+                  e.target.style.height = `${e.target.scrollHeight}px`;
 
                   const username = usernameRef.current;
                   if (!username) return;
@@ -297,7 +302,6 @@ export default function RoomPage() {
                   const now = Date.now();
                   if (now - lastTypingRef.current > 500) {
                     lastTypingRef.current = now;
-
                     const ws = getSocket();
                     if (ws.readyState === WebSocket.OPEN) {
                       ws.send(
@@ -310,10 +314,25 @@ export default function RoomPage() {
                     }
                   }
                 }}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
                 placeholder="Type a message..."
-                className="flex-1 px-5 py-3 rounded-full bg-white/10 text-white placeholder-gray-400
-                 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="
+                            flex-1
+                            min-h-[44px] max-h-40
+                            px-5 py-3
+                            rounded-full
+                            bg-white/10 text-white placeholder-gray-400
+                            border border-white/10
+                            focus:outline-none focus:ring-2 focus:ring-blue-500/40
+                            resize-none overflow-hidden
+                            leading-[1.4]
+                            transition-[height] duration-150
+                          "
               />
 
               <button
