@@ -81,3 +81,7 @@ html {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
+
+textarea:not(:placeholder-shown) {
+  border-radius: 1rem;
+}

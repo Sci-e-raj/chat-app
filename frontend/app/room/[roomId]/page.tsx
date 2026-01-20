@@ -25,6 +25,8 @@ export default function RoomPage() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const lastTypingRef = useRef(0);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
   /* ---------- username ---------- */
   useEffect(() => {
     const urlUser = searchParams.get("username");
@@ -126,6 +128,9 @@ export default function RoomPage() {
     );
     ws.send(JSON.stringify({ type: "chat", message: input.trim() }));
     setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "44px";
+    }
   }
 
   /* ---------- utils ---------- */
@@ -287,6 +292,7 @@ export default function RoomPage() {
           <div className="p-4 border-t border-white/10 backdrop-blur bg-black/40">
             <div className="flex gap-2">
               <textarea
+                ref={textareaRef}
                 value={input}
                 rows={1}
                 onChange={(e) => {
@@ -323,7 +329,7 @@ export default function RoomPage() {
                 placeholder="Type a message..."
                 className="
                             flex-1
-                            min-h-[44px] max-h-40
+                            min-h-11 max-h-40
                             px-5 py-3
                             rounded-full
                             bg-white/10 text-white placeholder-gray-400
